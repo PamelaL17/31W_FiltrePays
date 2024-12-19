@@ -1,18 +1,53 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Récupère tous les boutons de pays
-  var boutonsPays = document.querySelectorAll(".filtrepays__bouton");
+  const filtreBoutons = document.querySelectorAll(".filtrepays__bouton");
 
-  // Ajoute un écouteur d'événements pour chaque bouton
-  boutonsPays.forEach(function (button) {
-    button.addEventListener("click", function () {
-      var paysNom = this.getAttribute("data-pays"); // Récupère le nom du pays
+  function handleButtonClick(event) {
+    const paysNom = event.target.dataset.pays;
+    console.log("Pays sélectionné:", paysNom);
 
-      // Modifie l'URL sans recharger la page
-      var url = new URL(window.location.href);
-      url.searchParams.set("pays", paysNom); // Ajoute ou met à jour le paramètre 'pays' dans l'URL
+    // Requête vers l'API REST pour récupérer les articles du pays
+    fetch(`/wp-json/wp/v2/posts?search=${paysNom}&per_page=30`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Articles récupérés:", data);
+        afficherArticles(data);
+      })
+      .catch((error) =>
+        console.error("Erreur lors de l'extraction des destinations:", error)
+      );
+  }
 
-      // Recharger la page avec le pays sélectionné dans l'URL
-      window.location.href = url.toString();
+  function afficherArticles(articles) {
+    const container = document.querySelector("#filtre-resultats");
+    container.innerHTML = "";
+
+    articles.forEach((article) => {
+      const articleElement = document.createElement("article");
+      articleElement.classList.add("principal__article");
+
+      const titleElement = document.createElement("h5");
+      titleElement.textContent = article.title.rendered;
+      articleElement.appendChild(titleElement);
+
+      const excerptElement = document.createElement("p");
+      excerptElement.innerHTML = article.excerpt.rendered;
+      articleElement.appendChild(excerptElement);
+
+      // Ajouter l'image à la une si elle est disponible
+      const imageElement = document.createElement("div");
+      if (article.featured_media) {
+        const imageURL = article.featured_media_url;
+        imageElement.innerHTML = `<img src="${imageURL}" alt="Article Image" />`;
+      } else {
+        imageElement.innerHTML = `<img src="default-image.jpg" alt="No Image" />`;
+      }
+      articleElement.appendChild(imageElement);
+
+      container.appendChild(articleElement);
     });
+  }
+
+  filtreBoutons.forEach((button) => {
+    button.addEventListener("click", handleButtonClick);
   });
 });

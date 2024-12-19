@@ -10,14 +10,14 @@
 
 function filtre_pays_scripts() {
     wp_enqueue_style('filtre-pays-style', plugin_dir_url(__FILE__) . 'style.css');
-    wp_enqueue_style('filtre-pays-script', plugin_dir_url(__FILE__) . '/js/filtre-pays.js');
+    wp_enqueue_script('filtre-pays-script', plugin_dir_url(__FILE__) . 'js/filtre-pays.js', array(), null, true);
 }
 
 add_action('wp_enqueue_scripts', 'filtre_pays_scripts');
 
 // Shortcode pour afficher les boutons de pays
 function genere_boutons_filtre_pays() {
-    // Liste des pays à afficher
+    // Liste des pays à afficher (les catégories existantes)
     $pays = array(
         "France", "États-Unis", "Canada", "Argentine", "Chili", "Belgique", 
         "Maroc", "Mexique", "Japon", "Italie", "Islande", "Chine", "Grèce", "Suisse"
@@ -25,7 +25,8 @@ function genere_boutons_filtre_pays() {
 
     $contenu = '<div class="filtre__bouton">';
     foreach ($pays as $nom_pays) {
-        $contenu .= '<a href="' . esc_url(add_query_arg('pays', $nom_pays)) . '" class="filtrepays__bouton">' . esc_html($nom_pays) . '</a>';
+        // Crée un lien pour chaque pays, en utilisant le nom du pays comme paramètre dans l'URL
+        $contenu .= '<button data-pays="' . esc_attr($nom_pays) . '" class="filtrepays__bouton">' . esc_html($nom_pays) . '</button>';
     }
     $contenu .= '</div>';
 
@@ -36,12 +37,19 @@ add_shortcode('filtre_pays', 'genere_boutons_filtre_pays');
 
 // Fonction pour récupérer les articles par pays via la REST API
 function recuperer_articles_par_pays($pays) {
-    // Effectuer la requête REST pour récupérer les articles par pays
-    $url = get_site_url() . "/wp-json/wp/v2/posts?search=" . urlencode($pays) . "&per_page=30";
+    // Rechercher la catégorie par nom
+    $categorie = get_term_by('name', $pays, 'category');
+    if (!$categorie) {
+        return 'Aucune catégorie trouvée pour ce pays.';
+    }
 
-    // Récupérer les données avec wp_remote_get
+    // Construire l'URL de la requête REST API avec l'ID de la catégorie
+    $url = get_site_url() . "/wp-json/wp/v2/posts?categories=" . $categorie->term_id . "&per_page=30";
+
+    // Utiliser wp_remote_get pour effectuer la requête
     $response = wp_remote_get($url);
 
+    // Vérifier s'il y a une erreur dans la requête
     if (is_wp_error($response)) {
         return 'Erreur lors de la récupération des articles.';
     }
@@ -54,7 +62,7 @@ function recuperer_articles_par_pays($pays) {
         return 'Aucune destination trouvée pour ce pays.';
     }
 
-    // Afficher les articles récupérés
+    // Affichage des articles récupérés
     $contenu = '<div class="filtre__conteneur">';
     foreach ($posts as $post) {
         $contenu .= '<div class="filtre__item">';
@@ -76,4 +84,4 @@ function afficher_filtre_resultats() {
     }
 }
 
-add_action('wp_footer', 'afficher_filtre_resultats'); 
+add_action('wp_footer', 'afficher_filtre_resultats');
