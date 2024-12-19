@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Pays sélectionné:", paysNom);
 
     // Requête vers l'API REST pour récupérer les articles du pays
-    fetch(`/wp-json/wp/v2/posts?search=${paysNom}&per_page=30`)
+    fetch(`/31W/wp-json/wp/v2/posts?search=${paysNom}&per_page=30`)
       .then((response) => response.json())
       .then((data) => {
         console.log("Articles récupérés:", data);

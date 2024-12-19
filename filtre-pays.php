@@ -44,7 +44,7 @@ function recuperer_articles_par_pays($pays) {
     }
 
     // Construire l'URL de la requête REST API avec l'ID de la catégorie
-    $url = get_site_url() . "/wp-json/wp/v2/posts?categories=" . $categorie->term_id . "&per_page=30";
+    $url = get_site_url() . "/31W/wp-json/wp/v2/posts?search=" . $categorie->term_id . "&per_page=30";
 
     // Utiliser wp_remote_get pour effectuer la requête
     $response = wp_remote_get($url);
